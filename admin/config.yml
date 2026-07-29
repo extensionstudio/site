@@ -1,0 +1,27 @@
+backend:
+  name: github
+  repo: extensionstudio/site
+  branch: main
+  # No base_url needed: you sign in with a GitHub token (see setup steps).
+
+media_folder: "assets/uploads"
+public_folder: "/assets/uploads"
+
+collections:
+  - name: "site"
+    label: "Splash Page"
+    files:
+      - name: "home"
+        label: "Home — Hero"
+        file: "content/home.json"
+        fields:
+          - { name: "title", label: "Browser tab title", widget: "string" }
+          - { name: "wordmark", label: "Logo / wordmark", widget: "string" }
+          - { name: "meta", label: "Top-right label", widget: "string", required: false }
+          - { name: "heroImage", label: "Hero image", widget: "image" }
+          - { name: "headline", label: "Headline (use | for a line break)", widget: "string" }
+          - { name: "body1", label: "Paragraph 1", widget: "text" }
+          - { name: "body2", label: "Paragraph 2", widget: "text" }
+          - { name: "ctaLabel", label: "Button text", widget: "string" }
+          - { name: "ctaUrl", label: "Button link", widget: "string" }
+          - { name: "tagline", label: "Bottom tagline", widget: "string" }
