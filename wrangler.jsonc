@@ -1,9 +1,0 @@
-{
-  // Tells Cloudflare Workers to serve this repo as a plain static site.
-  // "name" must match your Cloudflare project name (shown as "site").
-  "name": "site",
-  "compatibility_date": "2026-07-29",
-  "assets": {
-    "directory": "./"
-  }
-}
