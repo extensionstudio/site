@@ -455,6 +455,11 @@
   .fb-beat__go:hover::after{ transform:scaleX(1); }
   @media (max-width:900px){ .frame--bot .fb-tag{ display:none; } .fb-beat{ max-width:80%; } }
   @media (max-width:560px){ .frame--bot .fb-loc{ display:none; } .fb-beat{ font-size:11px; max-width:92%; } }
+  /* ---------- LOGO ---------- */
+  .frame__mark{ display:inline-flex; align-items:center; line-height:0; }
+  .frame__logo{ height:clamp(13px,1.5vw,17px); width:auto; display:block; }
+  .frame__mark::after{ display:none; }
+  .footer__logo{ height:clamp(32px,6vw,58px); width:auto; display:block; }
 </style>
 </head>
 <body id="top">
@@ -464,7 +469,7 @@
 <span class="tick bl" aria-hidden="true"></span><span class="tick br" aria-hidden="true"></span>
 
 <div class="frame frame--top">
-  <a href="#top" class="frame__mark" data-cms="wordmark">Extension Studio</a>
+  <a href="#top" class="frame__mark" aria-label="Extension — home"><img src="assets/logo-mark.png" alt="Extension" class="frame__logo"></a>
   <nav class="frame__nav">
     <a href="#work" class="mono">Work</a>
     <a href="#studio" class="mono">Studio</a>
@@ -703,7 +708,7 @@
 
 <footer class="footer">
   <div>
-    <div class="footer__mark">Extension Studio</div>
+    <div class="footer__mark"><img src="assets/logo-mark.png" alt="Extension" class="footer__logo"></div>
     <div class="footer__tag mono">Creative production without borders.</div>
   </div>
   <div class="footer__links">
