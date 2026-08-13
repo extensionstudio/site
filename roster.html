@@ -86,11 +86,11 @@
   .empty h3{font-family:var(--font-display);font-weight:700;font-size:1.6rem;color:var(--warm);text-transform:uppercase}
   .more{text-align:center;padding:24px;color:var(--ink-mut);font-family:var(--font-mono);font-size:12px}
   .live{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mut);padding:0 clamp(16px,3vw,34px) 0}
-  .card__shot{aspect-ratio:16/10;border-radius:7px;overflow:hidden;position:relative;background:#141017;background-image:linear-gradient(110deg,#141017 30%,#1d1620 50%,#141017 70%);background-size:220% 100%;animation:shimmer 1.4s linear infinite;}
+  .card__shot{aspect-ratio:4/3;border-radius:7px;overflow:hidden;position:relative;background:#141017;background-image:linear-gradient(110deg,#141017 30%,#1d1620 50%,#141017 70%);background-size:220% 100%;animation:shimmer 1.4s linear infinite;}
   .card__shot.is-ready{animation:none;background:#0c0a08;}
   .card__shot.is-fail{display:none;}
   .card__shot img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;opacity:0;transition:opacity .45s ease;}
-  .card__shot{aspect-ratio:16/10;}
+  .card__shot{aspect-ratio:4/3;}
   .card__shot.is-ready img{opacity:1;}
   @keyframes shimmer{to{background-position:-220% 0;}}
   /* ---------- BOOKING MODAL ---------- */
@@ -160,6 +160,8 @@
   .tb__note{font-family:var(--font-mono);font-size:12px;color:#ff6b5c;padding:10px 0;}
   .tb__act{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber-hi);background:none;border:1px solid rgba(240,162,60,.5);border-radius:5px;padding:.45em .6em;cursor:pointer;white-space:nowrap;}
   .tb__act:hover{background:rgba(240,162,60,.12);}
+  .tb__chk{flex:0 0 auto;flex-direction:row!important;align-items:center;gap:8px;cursor:pointer;color:var(--ink-soft);text-transform:none;letter-spacing:0;font-family:var(--font-body);font-size:13px;}
+  .tb__chk input{width:15px;height:15px;accent-color:var(--amber);}
 </style>
 </head>
 <body>
@@ -228,8 +230,14 @@
         <label>Project start<input type="date" id="tbStart"></label>
         <label>Project length (days)<input type="number" id="tbDays" value="10" min="1"></label>
       </div>
-      <label class="tb__full">Your margin \u2014 <b id="tbMarginVal">35%</b><input type="range" id="tbMargin" min="0" max="60" value="35"></label>
+      <label class="tb__full">Your margin — <b id="tbMarginVal">35%</b><input type="range" id="tbMargin" min="0" max="60" value="35"></label>
       <div class="tb__budgets" id="tbBudgets"></div>
+      <h4>Filters <span style="color:var(--ink-mut);text-transform:none;letter-spacing:0">(optional)</span></h4>
+      <div class="chips" id="tbStyleChips" style="margin-bottom:8px"></div>
+      <div class="tb__row" style="gap:18px">
+        <label class="tb__chk"><input type="checkbox" id="tbFav"> Favorites only</label>
+        <label class="tb__chk"><input type="checkbox" id="tb3d"> 3D only</label>
+      </div>
       <h4>Team needed</h4>
       <div id="tbRoles"></div>
       <button class="tb__add" type="button" id="tbAddRole">+ Add role</button>
@@ -245,7 +253,7 @@
   var SHEET_CSV_URL = '';
   /* portfolio previews: swap SHOT for a paid/self-hosted screenshotter (urlbox/microlink+key) for privacy & reliability */
   var PREVIEW = true;
-  var SHOT = function(u){ return 'https://image.thum.io/get/viewportWidth/1280/width/720/crop/450/noanimate/' + u; };
+  var SHOT = function(u){ return 'https://image.thum.io/get/viewportWidth/1600/width/900/crop/675/noanimate/' + u; };
   /* booking: paste your Apps Script /exec URL to send emails as thomas@extstudio.com and write dates to the sheet */
   var BOOKING_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwfmbNT9pzyXWgoqoj9egkz5TKQmscoozrIO_f87HFV8qnb7V3WB8hGjZOpD7zKAWc/exec';
   var FROM_NAME = 'Thomas';
@@ -429,6 +437,8 @@
     var blob=new Blob([lines.join('\n')],{type:'text/csv'}),u=URL.createObjectURL(blob),l=document.createElement('a');l.href=u;l.download='extension-shortlist.csv';l.click();URL.revokeObjectURL(u);};
 
   initData(EMBED);
+  window.__rosterCb=function(data){ try{ if(data&&data.length){ initData(data); var lv=document.getElementById('live'); if(lv) lv.textContent='Live · synced with sheet ('+data.length.toLocaleString()+' artists)'; } }catch(e){} };
+  if(BOOKING_ENDPOINT){ var lv0=document.getElementById('live'); if(lv0) lv0.textContent='Syncing with sheet…'; var sc=document.createElement('script'); sc.src=BOOKING_ENDPOINT+(BOOKING_ENDPOINT.indexOf('?')>-1?'&':'?')+'action=roster&callback=__rosterCb&_='+Date.now(); sc.onerror=function(){ var l=document.getElementById('live'); if(l) l.textContent='Snapshot — sheet unreachable (check endpoint)'; }; document.body.appendChild(sc); }
   var live=document.getElementById('live');
   if(SHEET_CSV_URL){ live.textContent='Syncing with live sheet…';
     fetch(SHEET_CSV_URL).then(function(r){return r.text();}).then(function(t){var m=mapCSV(t);if(m.length){initData(m);live.textContent='Live · synced with sheet ('+m.length.toLocaleString()+' artists)';}else{live.textContent='Snapshot ('+EMBED.length.toLocaleString()+' artists)';}}).catch(function(){live.textContent='Snapshot ('+EMBED.length.toLocaleString()+' artists) — live sheet unreachable';});
@@ -449,6 +459,7 @@
   function openBooking(a,pf){ CUR=a;
     g('bkName').textContent=a.n; g('bkRole').textContent=(a.ro||'')+(a.lo?'  \u00b7  '+a.lo:'');
     ['bkStart','bkEnd','bkEarliest','bkHStart','bkHEnd'].forEach(function(id){g(id).value='';});
+    var _t=new Date(); g('bkStart').value=_t.toISOString().slice(0,10); g('bkEnd').value=new Date(_t.getTime()+14*86400000).toISOString().slice(0,10);
     g('bkRate').value = rateUSDstr(a);
     g('bkStatus').value=''; g('bkEarliestWrap').style.display='none'; g('bkHoldWrap').style.display='none';
     bkMsg(''); reqEdited=false; holdEdited=false; g('bkHoldSubj').value=''; g('bkHoldBody').value='';
@@ -507,7 +518,7 @@
   function key(a){ return (a.em||a.n).toLowerCase(); }
   function buildTeam(roles, teamBudget, days){
     var pools={}; roles.forEach(function(r){
-      pools[r.role]=ALL.filter(function(a){ return a.ro===r.role && dayUSD(a)>0 && !unavailable(a); })
+      pools[r.role]=ALL.filter(function(a){ return a.ro===r.role && dayUSD(a)>0 && !unavailable(a) && passFilters(a); })
         .map(function(a){ var c=Math.round(dayUSD(a)*days); return {a:a,cost:c,score:dayUSD(a)*(isFav(a)?1.15:1)}; })
         .sort(function(x,y){ return y.score-x.score; }); });
     var slots=[]; roles.forEach(function(r){ for(var i=0;i<r.qty;i++) slots.push({role:r.role,pick:null}); });
@@ -530,7 +541,7 @@
     var slots=[]; roles.forEach(function(r){ for(var i=0;i<r.qty;i++) slots.push({role:r.role,pick:null}); });
     var used={}, total=0;
     for(var i=0;i<slots.length;i++){ var s=slots[i];
-      var pool=ALL.filter(function(a){return a.ro===s.role && dayUSD(a)>0 && !unavailable(a);}).map(function(a){return {a:a,cost:Math.round(dayUSD(a)*days)};}).sort(function(x,y){return x.cost-y.cost;});
+      var pool=ALL.filter(function(a){return a.ro===s.role && dayUSD(a)>0 && !unavailable(a) && passFilters(a);}).map(function(a){return {a:a,cost:Math.round(dayUSD(a)*days)};}).sort(function(x,y){return x.cost-y.cost;});
       var pick=null; for(var j=0;j<pool.length;j++){ if(!used[key(pool[j].a)]){ pick=pool[j]; break; } }
       if(!pick) return {ok:false, reason:'Not enough available '+s.role+'s.'};
       s.pick=pick; used[key(pick.a)]=1; total+=pick.cost; }
@@ -559,6 +570,10 @@
     return o;
   }
   var tbM=document.getElementById('teamModal');
+  var tbStyle=new Set();
+  function passFilters(a){ if(tbStyle.size && !tbStyle.has(a.sy)) return false; var fv=g('tbFav'), td=g('tb3d'); if(fv&&fv.checked&&!isFav(a)) return false; if(td&&td.checked&&!a.d3) return false; return true; }
+  function renderTbStyles(){ var box=g('tbStyleChips'); if(!box) return; var keys=Object.keys(cStyle).filter(function(k){return cStyle[k]>0;}).sort(function(a,b){return cStyle[b]-cStyle[a];});
+    box.innerHTML=''; keys.forEach(function(k){ var c=document.createElement('button'); c.type='button'; c.className='chip'+(tbStyle.has(k)?' on':''); c.innerHTML=k+' <span class="c">'+cStyle[k]+'</span>'; c.onclick=function(){ tbStyle.has(k)?tbStyle.delete(k):tbStyle.add(k); c.classList.toggle('on'); }; box.appendChild(c); }); }
   function tbBudgets(){ var b=parseFloat(g('tbBudget').value)||0, m=parseFloat(g('tbMargin').value)||0;
     var team=b*(1-m/100), profit=b*(m/100);
     g('tbMarginVal').textContent=m+'%';
@@ -569,7 +584,7 @@
     row.innerHTML='<label style="flex:1">Discipline<select class="tbRole">'+roleOptions(role||'')+'</select></label><label style="flex:0 0 70px">Qty<input type="number" class="tbQty" min="1" value="'+(qty||1)+'"></label>';
     var rm=document.createElement('button'); rm.className='tb__rrm'; rm.type='button'; rm.textContent='\u2715'; rm.onclick=function(){ row.remove(); }; row.appendChild(rm);
     document.getElementById('tbRoles').appendChild(row); }
-  function openTeam(){ tbBudgets(); if(!document.querySelectorAll('#tbRoles .tb__rolerow').length){ addRoleRow('3D Generalist',2); addRoleRow('Art Director',1); } g('tbResult').innerHTML=''; tbM.hidden=false; }
+  function openTeam(){ tbBudgets(); renderTbStyles(); if(!document.querySelectorAll('#tbRoles .tb__rolerow').length){ addRoleRow('3D Generalist',2); addRoleRow('Art Director',1); } g('tbResult').innerHTML=''; tbM.hidden=false; }
   document.getElementById('build').onclick=openTeam;
   g('tbMargin').addEventListener('input',tbBudgets);
   g('tbBudget').addEventListener('input',tbBudgets);
