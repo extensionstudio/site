@@ -291,6 +291,7 @@
   var ALL=[], state={q:'',style:new Set(),status:new Set(),role:new Set(),sw:new Set(),rn:new Set(),co:new Set(),d3:false,pf:false,active:false,fav:false,sort:'name'};
   var cStyle,cStatus,cRole,cCo,cSw,cRn, fx=document.getElementById('facets');
   var FX=null;
+  var FAV={}; try{ FAV=JSON.parse(localStorage.getItem('ext_favs')||'{}'); }catch(e){}
   fetch(FX_URL).then(function(r){return r.json();}).then(function(d){if(d&&(d.rates||d.conversion_rates)){FX=d.rates||d.conversion_rates;render();}}).catch(function(){});
   function toUSD(rt,cu){ if(!rt||!FX) return null; var code=(''+(cu||'')).trim().slice(0,3).toUpperCase(); if(!code||code==='USD') return null; var r=FX[code]; if(!r) return null; return Math.round(rt/r); }
 
@@ -475,7 +476,7 @@
 
 
   /* ===== favorites ===== */
-  var FAV={}; try{ FAV=JSON.parse(localStorage.getItem('ext_favs')||'{}'); }catch(e){}
+  /* FAV initialized near top */
   function favKey(a){ return (a.em||a.n||'').toLowerCase(); }
   function isFav(a){ return !!FAV[favKey(a)] || !!a.fav; }
   function toggleFav(a){ var k=favKey(a); if(FAV[k]){ delete FAV[k]; a.fav=false; } else { FAV[k]=1; a.fav=true; }
