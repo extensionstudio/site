@@ -444,12 +444,12 @@
     var blob=new Blob([lines.join('\n')],{type:'text/csv'}),u=URL.createObjectURL(blob),l=document.createElement('a');l.href=u;l.download='extension-shortlist.csv';l.click();URL.revokeObjectURL(u);};
 
   initData(EMBED);
-  window.__rosterCb=function(data){ try{ if(data&&data.length){ initData(data); var lv=document.getElementById('live'); if(lv) lv.textContent='Live · synced with sheet ('+data.length.toLocaleString()+' artists)'; } }catch(e){} };
-  if(BOOKING_ENDPOINT){ var lv0=document.getElementById('live'); if(lv0) lv0.textContent='Syncing with sheet…'; var sc=document.createElement('script'); sc.src=BOOKING_ENDPOINT+(BOOKING_ENDPOINT.indexOf('?')>-1?'&':'?')+'action=roster&callback=__rosterCb&_='+Date.now(); sc.onerror=function(){ var l=document.getElementById('live'); if(l) l.textContent='Snapshot — sheet unreachable (check endpoint)'; }; document.body.appendChild(sc); }
+  window.__rosterCb=function(data){ window.__synced=true; try{ if(data&&data.length){ initData(data); var lv=document.getElementById('live'); if(lv) lv.textContent='Live · synced with sheet ('+data.length.toLocaleString()+' artists)'; } }catch(e){} };
+  if(BOOKING_ENDPOINT){ var lv0=document.getElementById('live'); if(lv0) lv0.textContent='Syncing with sheet…'; var sc=document.createElement('script'); sc.src=BOOKING_ENDPOINT+(BOOKING_ENDPOINT.indexOf('?')>-1?'&':'?')+'action=roster&callback=__rosterCb&_='+Date.now(); sc.onerror=function(){ var l=document.getElementById('live'); if(l) l.textContent='Snapshot — sheet unreachable (check endpoint)'; }; document.body.appendChild(sc); setTimeout(function(){ if(!window.__synced){ var l=document.getElementById('live'); if(l) l.textContent='Snapshot — sheet not responding; check the /exec deployment & access'; } },9000); }
   var live=document.getElementById('live');
   if(SHEET_CSV_URL){ live.textContent='Syncing with live sheet…';
     fetch(SHEET_CSV_URL).then(function(r){return r.text();}).then(function(t){var m=mapCSV(t);if(m.length){initData(m);live.textContent='Live · synced with sheet ('+m.length.toLocaleString()+' artists)';}else{live.textContent='Snapshot ('+EMBED.length.toLocaleString()+' artists)';}}).catch(function(){live.textContent='Snapshot ('+EMBED.length.toLocaleString()+' artists) — live sheet unreachable';});
-  } else { live.textContent='Snapshot ('+EMBED.length.toLocaleString()+' artists) — set SHEET_CSV_URL to sync live'; }
+  } else if(!BOOKING_ENDPOINT){ live.textContent='Snapshot ('+EMBED.length.toLocaleString()+' artists) — set SHEET_CSV_URL to sync live'; }
 
   /* ===== booking / availability workflow ===== */
   var CUR=null, reqEdited=false, holdEdited=false;
