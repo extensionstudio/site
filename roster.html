@@ -305,6 +305,7 @@
   var FX=null;
   var FAV={}; try{ FAV=JSON.parse(localStorage.getItem('ext_favs')||'{}'); }catch(e){}
   var OV={}; try{ OV=JSON.parse(localStorage.getItem('ext_overrides')||'{}'); }catch(e){}
+  if(BOOKING_ENDPOINT){ OV={}; try{ localStorage.removeItem('ext_overrides'); }catch(e){} }
   function saveOverride(a,obj){ if(!a) return; for(var k in obj) a[k]=obj[k]; var kk=(a.em||a.n||'').toLowerCase(); OV[kk]=OV[kk]||{}; for(var k2 in obj) OV[kk][k2]=obj[k2]; try{ localStorage.setItem('ext_overrides',JSON.stringify(OV)); }catch(e){} }
   fetch(FX_URL).then(function(r){return r.json();}).then(function(d){if(d&&(d.rates||d.conversion_rates)){FX=d.rates||d.conversion_rates;render();}}).catch(function(){});
   function toUSD(rt,cu){ if(!rt||!FX) return null; var code=(''+(cu||'')).trim().slice(0,3).toUpperCase(); if(!code||code==='USD') return null; var r=FX[code]; if(!r) return null; return Math.round(rt/r); }
@@ -384,10 +385,10 @@
     return 'st-neutral'; }
   function esc(s){return(''+(s||'')).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function dateNote(a){ var s=(a.st||'').toLowerCase();
-    if(a.bks) return '<span class="k">Booked</span>'+esc(a.bks)+(a.bke?' – '+esc(a.bke):'');
-    if(a.h1s) return '<span class="k">1st hold</span>'+esc(a.h1s)+(a.h1e?' – '+esc(a.h1e):'');
-    if(a.h2s) return '<span class="k">2nd hold</span>'+esc(a.h2s)+(a.h2e?' – '+esc(a.h2e):'');
-    if(a.eas) return '<span class="k">'+(s.indexOf('not available')>-1?'Free from':'Earliest')+'</span>'+esc(a.eas);
+    if(s.indexOf('book')>-1 && a.bks) return '<span class="k">Booked</span>'+esc(a.bks)+(a.bke?' – '+esc(a.bke):'');
+    if(s.indexOf('2nd hold')>-1 && a.h2s) return '<span class="k">2nd hold</span>'+esc(a.h2s)+(a.h2e?' – '+esc(a.h2e):'');
+    if(s.indexOf('1st hold')>-1 && a.h1s) return '<span class="k">1st hold</span>'+esc(a.h1s)+(a.h1e?' – '+esc(a.h1e):'');
+    if((s.indexOf('not available')>-1||s.indexOf('earliest')>-1) && a.eas) return '<span class="k">'+(s.indexOf('not available')>-1?'Free from':'Earliest')+'</span>'+esc(a.eas);
     return ''; }
   function card(a){var el=document.createElement('div');el.className='card';var sw=[a.ps,a.ss,a.rn].filter(Boolean).join(' · ');
     var rate=a.rt?('$'+a.rt.toLocaleString()+' '+(a.cu||'').replace(/[^A-Za-z]/g,'')+' /'+(a.pr||'day').toLowerCase()):'Rate on ask';
@@ -423,7 +424,7 @@
     if(res.length>LIMIT){var m=document.createElement('div');m.className='more';m.style.gridColumn='1/-1';m.textContent='Showing first '+LIMIT+' of '+res.length+' — refine filters to narrow the list.';grid.appendChild(m);}
     window.__res=res; }
 
-  function initData(list){ ALL=list.map(derive); try{var _f=JSON.parse(localStorage.getItem('ext_favs')||'{}');ALL.forEach(function(a){if(_f[(a.em||a.n||'').toLowerCase()])a.fav=true;});}catch(e){} ALL.forEach(function(a){var o=OV[(a.em||a.n||'').toLowerCase()];if(o){for(var k in o)a[k]=o[k];}});
+  function initData(list){ ALL=list.map(derive); try{var _f=JSON.parse(localStorage.getItem('ext_favs')||'{}');ALL.forEach(function(a){if(_f[(a.em||a.n||'').toLowerCase()])a.fav=true;});}catch(e){} if(!BOOKING_ENDPOINT){ ALL.forEach(function(a){var o=OV[(a.em||a.n||'').toLowerCase()];if(o){for(var k in o)a[k]=o[k];}}); }
     cStyle=seededStyleCounts(); cStatus=seededStatusCounts(); cRole=counts(function(a){return[a.ro];}); cCo=counts(function(a){return[a.co];});
     cSw={};SOFTWARE.forEach(function(s){cSw[s[0]]=ALL.filter(function(a){return swblob(a).indexOf(s[1])>-1;}).length;});
     cRn={};RENDER.forEach(function(r){cRn[r]=ALL.filter(function(a){return(a.rn||'').toLowerCase()===r.toLowerCase();}).length;});
