@@ -383,6 +383,12 @@
     if(s.indexOf('not available')>-1||s==='dead') return 'st-na';
     return 'st-neutral'; }
   function esc(s){return(''+(s||'')).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function dateNote(a){ var s=(a.st||'').toLowerCase();
+    if(a.bks) return '<span class="k">Booked</span>'+esc(a.bks)+(a.bke?' – '+esc(a.bke):'');
+    if(a.h1s) return '<span class="k">1st hold</span>'+esc(a.h1s)+(a.h1e?' – '+esc(a.h1e):'');
+    if(a.h2s) return '<span class="k">2nd hold</span>'+esc(a.h2s)+(a.h2e?' – '+esc(a.h2e):'');
+    if(a.eas) return '<span class="k">'+(s.indexOf('not available')>-1?'Free from':'Earliest')+'</span>'+esc(a.eas);
+    return ''; }
   function card(a){var el=document.createElement('div');el.className='card';var sw=[a.ps,a.ss,a.rn].filter(Boolean).join(' · ');
     var rate=a.rt?('$'+a.rt.toLocaleString()+' '+(a.cu||'').replace(/[^A-Za-z]/g,'')+' /'+(a.pr||'day').toLowerCase()):'Rate on ask';
     var usd=toUSD(a.rt,a.cu); if(usd) rate+=' · ≈ $'+usd.toLocaleString()+' USD';
@@ -390,7 +396,7 @@
       '<div class="card__badges">'+'<button class="fav'+(isFav(a)?' on':'')+'" title="Favorite" aria-label="Favorite">\u2665</button>'+(a.d3?'<span class="badge badge--3d">3D</span>':(a.dim?'<span class="badge">'+a.dim+'</span>':''))+(a.st?'<span class="stbadge '+stClass(a.st)+'">'+esc(a.st)+'</span>':'')+'</div></div>'+
       (a.sy?'<div class="card__style"><span class="stag">'+esc(a.sy)+'</span></div>':'')+
       '<div class="card__meta">'+(sw?'<div><span class="k">Software</span>'+esc(sw)+'</div>':'')+
-      (a.lo?'<div><span class="k">Based</span>'+esc(a.lo)+'</div>':'')+'<div><span class="k">Rate</span>'+esc(rate)+'</div></div>'+
+      (a.lo?'<div><span class="k">Based</span>'+esc(a.lo)+'</div>':'')+'<div><span class="k">Rate</span>'+esc(rate)+'</div>'+(dateNote(a)?'<div>'+dateNote(a)+'</div>':'')+'</div>'+
       '<div class="card__foot">'+(a.pf?'<a href="'+esc(a.pf)+'" target="_blank" rel="noopener">Portfolio ↗</a>':'')+
       (a.em?'<button class="book-btn">Check availability</button>':'')+'</div>';
     var bk=el.querySelector('.book-btn');if(bk)bk.onclick=function(){openBooking(a);};
