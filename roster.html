@@ -112,6 +112,14 @@
   .bk__btn:hover{background:var(--amber-hi);}
   .bk__div{border-top:1px solid var(--line);margin-top:22px;}
   .bk__msg{font-family:var(--font-mono);font-size:11px;color:var(--amber-hi);margin-top:12px;min-height:1em;text-align:center;}
+  /* status badges */
+  .card__badges{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex:0 0 auto;}
+  .stbadge{font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;padding:.35em .5em;border-radius:4px;border:1px solid;white-space:nowrap;text-transform:uppercase;}
+  .st-check{color:#6f9be6;border-color:rgba(111,155,230,.55);background:rgba(111,155,230,.12);}
+  .st-hold{color:#f0c14b;border-color:rgba(240,193,75,.55);background:rgba(240,193,75,.12);}
+  .st-book{color:#58c39a;border-color:rgba(88,195,154,.55);background:rgba(88,195,154,.12);}
+  .st-na{color:#ff6b5c;border-color:rgba(255,107,92,.55);background:rgba(255,107,92,.12);}
+  .st-neutral{color:var(--ink-mut);border-color:var(--line);}
 </style>
 </head>
 <body>
@@ -177,7 +185,7 @@
   var PREVIEW = true;
   var SHOT = function(u){ return 'https://image.thum.io/get/width/440/crop/300/noanimate/' + u; };
   /* booking: paste your Apps Script /exec URL to send emails as thomas@extstudio.com and write dates to the sheet */
-  var BOOKING_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwfmbNT9pzyXWgoqoj9egkz5TKQmscoozrIO_f87HFV8qnb7V3WB8hGjZOpD7zKAWc/exec';
+  var BOOKING_ENDPOINT = '';
   var FROM_NAME = 'Thomas';
   var FX_URL = 'https://open.er-api.com/v6/latest/USD';
 
@@ -285,12 +293,18 @@
   function loadShot(el){var u=el.dataset.shot;if(!u||el.dataset.done)return;el.dataset.done=1;var img=new Image();img.alt='';img.referrerPolicy='no-referrer';img.onload=function(){el.appendChild(img);el.classList.add('is-ready');};img.onerror=function(){el.classList.add('is-fail');};img.src=SHOT(u);}
   function mountShots(){var s=document.querySelectorAll('.card__shot[data-shot]');if(!shotIO){[].forEach.call(s,loadShot);return;}[].forEach.call(s,function(el){shotIO.observe(el);});}
   var LIMIT=400;
+  function stClass(s){ s=(''+(s||'')).toLowerCase();
+    if(s.indexOf('check')>-1) return 'st-check';
+    if(s.indexOf('hold')>-1) return 'st-hold';
+    if(s.indexOf('book')>-1||s.indexOf('award')>-1||s.indexOf('deliver')>-1) return 'st-book';
+    if(s.indexOf('not available')>-1||s==='dead') return 'st-na';
+    return 'st-neutral'; }
   function esc(s){return(''+(s||'')).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function card(a){var el=document.createElement('div');el.className='card';var sw=[a.ps,a.ss,a.rn].filter(Boolean).join(' · ');
     var rate=a.rt?('$'+a.rt.toLocaleString()+' '+(a.cu||'').replace(/[^A-Za-z]/g,'')+' /'+(a.pr||'day').toLowerCase()):'Rate on ask';
     var usd=toUSD(a.rt,a.cu); if(usd) rate+=' · ≈ $'+usd.toLocaleString()+' USD';
     el.innerHTML=(PREVIEW&&a.pf?'<div class="card__shot" data-shot="'+esc(a.pf)+'"></div>':'')+'<div class="card__top"><div><div class="card__name">'+esc(a.n)+'</div><div class="card__role">'+esc(a.ro||'—')+'</div></div>'+
-      (a.d3?'<span class="badge badge--3d">3D</span>':(a.dim?'<span class="badge">'+a.dim+'</span>':''))+'</div>'+
+      '<div class="card__badges">'+(a.d3?'<span class="badge badge--3d">3D</span>':(a.dim?'<span class="badge">'+a.dim+'</span>':''))+(a.st?'<span class="stbadge '+stClass(a.st)+'">'+esc(a.st)+'</span>':'')+'</div></div>'+
       (a.sy?'<div class="card__style"><span class="stag">'+esc(a.sy)+'</span></div>':'')+
       '<div class="card__meta">'+(sw?'<div><span class="k">Software</span>'+esc(sw)+'</div>':'')+
       (a.lo?'<div><span class="k">Based</span>'+esc(a.lo)+'</div>':'')+'<div><span class="k">Rate</span>'+esc(rate)+'</div></div>'+
@@ -347,10 +361,10 @@
   var CUR=null;
   function d2(s,e){ if(s&&e) return s+' \u2013 '+e; return s||e||'[dates]'; }
   function reqEmail(a,s,e){ return {subject:'Extension \u2014 Availability check',
-    body:'Hello '+a.n+',\n\nWe\'re looking for '+(a.ro||'creative')+' support on a project for the following dates: '+d2(s,e)+'. Do you have availability?\n\nThanks,\n'+FROM_NAME+'\nExtension'}; }
+    body:'Hello '+a.n+',\n\nWe\'re looking for '+(a.ro||'creative')+' support on a project for the following dates: '+d2(s,e)+'. Do you have availability?\n\nThanks,'}; }
   function holdEmail(a,type,s,e,rate){ var verb=type==='Booking'?'book you for':(type==='1st Hold'?'place a first hold for':'place a second hold for');
     return {subject:'Extension \u2014 '+type+' ['+d2(s,e)+']',
-    body:'Hi '+a.n+',\n\nWe would like to '+verb+' the following dates: '+d2(s,e)+(rate?' at '+rate:'')+'.\n\nPlease confirm.\n\nThanks,\n'+FROM_NAME+'\nExtension'}; }
+    body:'Hi '+a.n+',\n\nWe would like to '+verb+' the following dates: '+d2(s,e)+(rate?' at '+rate:'')+'.\n\nPlease confirm.\n\nThanks,'}; }
   function post(payload){ if(BOOKING_ENDPOINT){ fetch(BOOKING_ENDPOINT,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}); return true; } return false; }
   function mailto(to,em){ window.location.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(em.subject)+'&body='+encodeURIComponent(em.body); }
   function bkMsg(t){ var m=document.getElementById('bkMsg'); if(m) m.textContent=t; }
@@ -370,8 +384,9 @@
     g('bkEarliestWrap').style.display=(v==='Earliest available'||v==='Not available')?'flex':'none';
     g('bkHoldWrap').style.display=(v==='1st Hold'||v==='2nd Hold'||v==='Booking')?'block':'none'; holdPrev(); });
   g('bkSendReq').onclick=function(){ if(!CUR)return; var s=g('bkStart').value,e=g('bkEnd').value,em=reqEmail(CUR,s,e);
-    if(post({to:CUR.em,name:CUR.n,sendEmail:true,subject:em.subject,body:em.body,update:{Status:'Checking Availability'}})){ bkMsg('Availability request sent to '+CUR.em+' \u2713'); }
-    else { mailto(CUR.em,em); bkMsg('Opening your email client\u2026'); } };
+    if(!BOOKING_ENDPOINT){ bkMsg('Not connected yet \u2014 add your Apps Script URL to BOOKING_ENDPOINT.'); return; }
+    post({to:CUR.em,name:CUR.n,sendEmail:true,subject:em.subject,body:em.body,update:{Status:'Checking Availability'}});
+    CUR.st='Checking Availability'; render(); bkMsg('Sent from thomas@extstudio.com \u2713'); };
   g('bkSave').onclick=function(){ if(!CUR)return; var st=g('bkStatus').value; if(!st){ bkMsg('Pick a status first.'); return; }
     var update={Status:st}, em=null;
     if(st==='Earliest available'||st==='Not available'){ update['Earliest Availability - Start']=g('bkEarliest').value; }
@@ -381,9 +396,9 @@
       if(st==='Booking'){ update['Booking - Start']=s; update['Booking - End']=e; }
       em=holdEmail(CUR,st,s,e,r);
     }
-    if(post({to:CUR.em,name:CUR.n,sendEmail:!!em,subject:em?em.subject:'',body:em?em.body:'',update:update})){ bkMsg('Saved'+(em?' \u00b7 '+st+' email sent':'')+' \u2713'); }
-    else { if(em){ mailto(CUR.em,em); bkMsg('Opening email\u2026 (connect the endpoint to also write dates to the sheet)'); } else { bkMsg('Connect the booking endpoint to write status to the sheet.'); } }
-  };
+    if(!BOOKING_ENDPOINT){ bkMsg('Not connected yet \u2014 add your Apps Script URL to BOOKING_ENDPOINT.'); return; }
+    post({to:CUR.em,name:CUR.n,sendEmail:!!em,subject:em?em.subject:'',body:em?em.body:'',update:update});
+    CUR.st=st; render(); bkMsg('Saved'+(em?' \u00b7 '+st+' email sent from thomas@extstudio.com':'')+' \u2713'); };
   document.querySelectorAll('[data-bk-close]').forEach(function(b){ b.addEventListener('click',function(){ g('bookModal').hidden=true; }); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=g('bookModal'); if(m&&!m.hidden) m.hidden=true; } });
 
