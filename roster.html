@@ -444,7 +444,7 @@
     var blob=new Blob([lines.join('\n')],{type:'text/csv'}),u=URL.createObjectURL(blob),l=document.createElement('a');l.href=u;l.download='extension-shortlist.csv';l.click();URL.revokeObjectURL(u);};
 
   initData(EMBED);
-  window.__rosterCb=function(data){ window.__synced=true; try{ if(data&&data.length){ initData(data); var lv=document.getElementById('live'); if(lv) lv.textContent='Live · synced with sheet ('+data.length.toLocaleString()+' artists)'; } }catch(e){} };
+  window.__rosterCb=function(data){ window.__synced=true; try{ if(data&&data.length){ initData(data); var lv=document.getElementById('live'); if(lv) lv.textContent='Live · synced with sheet ('+data.length.toLocaleString()+' artists)'; } else { var l2=document.getElementById('live'); if(l2) l2.textContent='Endpoint reachable but returned 0 rows — check the Roster tab & headers'; } }catch(e){} };
   if(BOOKING_ENDPOINT){ var lv0=document.getElementById('live'); if(lv0) lv0.textContent='Syncing with sheet…'; var sc=document.createElement('script'); sc.src=BOOKING_ENDPOINT+(BOOKING_ENDPOINT.indexOf('?')>-1?'&':'?')+'action=roster&callback=__rosterCb&_='+Date.now(); sc.onerror=function(){ var l=document.getElementById('live'); if(l) l.textContent='Snapshot — sheet unreachable (check endpoint)'; }; document.body.appendChild(sc); setTimeout(function(){ if(!window.__synced){ var l=document.getElementById('live'); if(l) l.textContent='Snapshot — sheet not responding; check the /exec deployment & access'; } },9000); }
   var live=document.getElementById('live');
   if(SHEET_CSV_URL){ live.textContent='Syncing with live sheet…';
@@ -503,11 +503,11 @@
   /* bkSave — persists locally always; writes sheet + emails when endpoint connected */
   g('bkSave').onclick=function(){ if(!CUR)return; var st=g('bkStatus').value; if(!st){ bkMsg('Pick a status first.'); return; }
     var update={Status:st}, ov={st:st}, em=null;
-    if(st==='Earliest available'||st==='Not available'){ var ea=g('bkEarliest').value; update['Earliest Availability - Start']=ea; ov.eas=ea; }
-    else { var sd=g('bkHStart').value, ed=g('bkHEnd').value, r=g('bkRate').value;
-      if(st==='1st Hold'){ update['1st Hold - Start']=sd; update['1st Hold - End']=ed; ov.h1s=sd; ov.h1e=ed; }
-      if(st==='2nd Hold'){ update['2nd Hold - Start']=sd; update['2nd Hold - End']=ed; ov.h2s=sd; ov.h2e=ed; }
-      if(st==='Booking'){ update['Booking - Start']=sd; update['Booking - End']=ed; ov.bks=sd; ov.bke=ed; }
+    if(st==='Earliest available'||st==='Not available'){ var ea=g('bkEarliest').value; update['Earliest Availability']=ea; ov.eas=ea; }
+    else { var sd=g('bkHStart').value, ed=g('bkHEnd').value, r=g('bkRate').value; var rng=sd+(ed?' – '+ed:'');
+      if(st==='1st Hold'){ update['1st Hold']=rng; ov.h1s=sd; ov.h1e=ed; }
+      if(st==='2nd Hold'){ update['2nd Hold']=rng; ov.h2s=sd; ov.h2e=ed; }
+      if(st==='Booking'){ update['Booking']=rng; ov.bks=sd; ov.bke=ed; }
       em=holdEmail(CUR,st,sd,ed,r);
     }
     saveOverride(CUR, ov); render();
